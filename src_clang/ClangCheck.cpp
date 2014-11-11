@@ -168,8 +168,8 @@ int main(int argc, const char **argv) {
 
   // Running the analyzer requires --analyze. Other modes can work with the
   // -fsyntax-only option.
-  Tool.appendArgumentsAdjuster(new InsertArgumentAdjuster(
-      Analyze ? "--analyze" : "-fsyntax-only", InsertArgumentAdjuster::BEGIN));
+  Tool.appendArgumentsAdjuster(new ArgumentsAdjuster(
+      Analyze ? "--analyze" : "-fsyntax-only", ArgumentsAdjuster::BEGIN));
 
   ClangCheckActionFactory CheckFactory;
   std::unique_ptr<FrontendActionFactory> FrontendFactory;
