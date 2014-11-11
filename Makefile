@@ -44,7 +44,7 @@ $(info -----------------------------------------------)
 # higher or Clang 3.2 and higher are recommended. Best of all, if you build LLVM
 # from sources, use the same compiler you built LLVM with.
 CXX := g++
-CXXFLAGS := -fno-rtti -O0 -g
+CXXFLAGS := -std=c++11 -stdlib=libc++ -fno-rtti -O0 -g -L/usr/lib/
 PLUGIN_CXXFLAGS := -fpic
 
 LLVM_CXXFLAGS := `$(LLVM_BIN_PATH)/llvm-config --cxxflags`
@@ -55,7 +55,7 @@ LLVM_LDFLAGS := `$(LLVM_BIN_PATH)/llvm-config --ldflags --libs --system-libs`
 # libs to be linked more than once because it uses globals for configuration
 # and plugin registration, and these trample over each other.
 LLVM_LDFLAGS_NOLIBS := `$(LLVM_BIN_PATH)/llvm-config --ldflags`
-PLUGIN_LDFLAGS := -shared
+PLUGIN_LDFLAGS := -shared -Wl,-undefined,dynamic_lookup
 
 CLANG_INCLUDES := \
 	-I$(LLVM_SRC_PATH)/tools/clang/include \
