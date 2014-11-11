@@ -44,7 +44,7 @@ $(info -----------------------------------------------)
 # higher or Clang 3.2 and higher are recommended. Best of all, if you build LLVM
 # from sources, use the same compiler you built LLVM with.
 CXX := g++
-CXXFLAGS := -fno-rtti -O0 -g
+CXXFLAGS := -std=c++11 -stdlib=libc++ -fno-rtti -O0 -g -L/usr/lib
 PLUGIN_CXXFLAGS := -fpic
 
 LLVM_CXXFLAGS := `$(LLVM_BIN_PATH)/llvm-config --cxxflags`
@@ -68,7 +68,6 @@ CLANG_INCLUDES := \
 # to specify and maintain. The linker group options make the linking somewhat
 # slower, but IMHO they're still perfectly fine for tools that link with Clang.
 CLANG_LIBS := \
-	-Wl,--start-group \
 	-lclangAST \
 	-lclangAnalysis \
 	-lclangBasic \
@@ -87,9 +86,7 @@ CLANG_LIBS := \
 	-lclangStaticAnalyzerCheckers \
 	-lclangStaticAnalyzerCore \
 	-lclangSerialization \
-	-lclangToolingCore \
-	-lclangTooling \
-	-Wl,--end-group
+	-lclangTooling
 
 # Internal paths in this project: where to find sources, and where to put
 # build artifacts.
