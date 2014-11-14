@@ -70,6 +70,8 @@ CLANG_INCLUDES := \
 # to specify and maintain. The linker group options make the linking somewhat
 # slower, but IMHO they're still perfectly fine for tools that link with Clang.
 
+# Note: if using Darwin, may need to get rid of -lclangToolingCore.
+
 ifneq ($(UNAME),Darwin)
 	CLANG_LIBS += \
 	-Wl,--start-group
