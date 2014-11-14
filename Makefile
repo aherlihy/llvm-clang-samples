@@ -6,6 +6,8 @@
 # This code is in the public domain
 #-------------------------------------------------------------------------------
 
+UNAME := $(shell uname -s)
+
 # The following variables will likely need to be customized, depending on where
 # and how you built LLVM & Clang. They can be overridden by setting them on the
 # make command line: "make VARNAME=VALUE", etc.
@@ -67,8 +69,13 @@ CLANG_INCLUDES := \
 # because there are circular dependencies that make the correct order difficult
 # to specify and maintain. The linker group options make the linking somewhat
 # slower, but IMHO they're still perfectly fine for tools that link with Clang.
-CLANG_LIBS := \
-	-Wl,--start-group \
+
+ifneq ($(UNAME),Darwin)
+	CLANG_LIBS += \
+	-Wl,--start-group
+endif
+
+CLANG_LIBS += \
 	-lclangAST \
 	-lclangAnalysis \
 	-lclangBasic \
@@ -88,8 +95,12 @@ CLANG_LIBS := \
 	-lclangStaticAnalyzerCore \
 	-lclangSerialization \
 	-lclangToolingCore \
-	-lclangTooling \
-	-Wl,--end-group
+	-lclangTooling
+
+ifneq ($(UNAME),Darwin)
+	CLANG_LIBS += \
+		-Wl,--end-group
+endif
 
 # Internal paths in this project: where to find sources, and where to put
 # build artifacts.
