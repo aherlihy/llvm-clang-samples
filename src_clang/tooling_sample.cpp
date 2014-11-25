@@ -82,6 +82,35 @@ public:
     return true;
   }
 
+  bool VisitCallExpr (CallExpr *e)
+  {
+    clang::LangOptions LangOpts;
+    LangOpts.CPlusPlus = true;
+    clang::PrintingPolicy Policy(LangOpts);
+    
+    std::stringstream FCBefore;
+    if(e->getNumArgs()) {
+        FCBefore << "//arg: [";
+    }
+    for(int i=0, j=e->getNumArgs(); i<j; i++)
+    {
+        std::string TypeS;
+        llvm::raw_string_ostream s(TypeS);
+        e->getArg(i)->printPretty(s, 0, Policy);
+	FCBefore << s.str() << " ";
+    }
+    if(e->getNumArgs()) {
+        FCBefore << "]\n";
+    }
+
+    SourceLocation ST = e->getSourceRange().getBegin();
+    TheRewriter.InsertText(ST, FCBefore.str(), true, true);
+    
+    return true;
+}
+
+
+
 private:
   Rewriter &TheRewriter;
 };
@@ -132,7 +161,13 @@ private:
 };
 
 int main(int argc, const char **argv) {
+  printf("in main of clang sample\n Args : ");
+  for(int i=0;i<argc;i++) {
+    printf("'%s', ", argv[i]);
+  }
+  printf("\n");
   CommonOptionsParser op(argc, argv, ToolingSampleCategory);
+
   ClangTool Tool(op.getCompilations(), op.getSourcePathList());
 
   // ClangTool::run accepts a FrontendActionFactory, which is then used to
