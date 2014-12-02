@@ -34,26 +34,32 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
-  bool VisitStmt(Stmt *s) {
-    // Only care about If statements.
-    if (isa<IfStmt>(s)) {
-      IfStmt *IfStatement = cast<IfStmt>(s);
-      Stmt *Then = IfStatement->getThen();
 
-      TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true,
-                             true);
-
-      Stmt *Else = IfStatement->getElse();
-      if (Else)
-        TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
-                               true, true);
-    }
-
-    return true;
-  }
-
+  // TODO: change F(const StringData& c) to F(StringData c)
   bool VisitFunctionDecl(FunctionDecl *f) {
     // Only function definitions (with bodies), not declarations.
+    std::stringstream SSBefore;
+    SSBefore << "// FuncDecl Args of type: [";
+    unsigned int num_params = f->getNumParams();
+    for (unsigned int i=0;i<num_params;i++) {
+        ParmVarDecl* p = f->getParamDecl(i);
+        clang::QualType original_type = p->getOriginalType();
+
+        //if (original_type.getNonReferenceType().isConstQualified()) {
+            //if (original_type->isReferenceType()) {
+            
+            //}
+        //}
+
+        std::string param_str = original_type.getAsString();
+        SSBefore << param_str << ", ";
+
+    }
+    SSBefore << "]\n";
+    SourceLocation ST = f->getSourceRange().getBegin();
+    TheRewriter.InsertText(ST, SSBefore.str(), true, true);
+
+    /*
     if (f->hasBody()) {
       Stmt *FuncBody = f->getBody();
 
@@ -78,10 +84,10 @@ public:
       ST = FuncBody->getLocEnd().getLocWithOffset(1);
       TheRewriter.InsertText(ST, SSAfter.str(), true, true);
     }
-
+    */
     return true;
   }
-
+/*
   bool VisitCallExpr (CallExpr *e)
   {
     clang::LangOptions LangOpts;
@@ -108,7 +114,7 @@ public:
     
     return true;
 }
-
+*/
 
 
 private:
