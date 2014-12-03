@@ -9,6 +9,7 @@
 // This code is in the public domain
 //------------------------------------------------------------------------------
 #include <sstream>
+#include <iostream>
 #include <string>
 
 #include "clang/AST/AST.h"
@@ -44,16 +45,22 @@ public:
     for (unsigned int i=0;i<num_params;i++) {
         ParmVarDecl* p = f->getParamDecl(i);
         clang::QualType original_type = p->getOriginalType();
-
-        //if (original_type.getNonReferenceType().isConstQualified()) {
-            //if (original_type->isReferenceType()) {
+        const IdentifierInfo* id = original_type.getBaseTypeIdentifier();
+        
+        if (id == NULL) {
+            continue;
+        }
+        
+        if (!id->getName().compare("StringData")) {
+            SSBefore << "(" << id->getName().str() << ")";
             
-            //}
-        //}
-
-        std::string param_str = original_type.getAsString();
-        SSBefore << param_str << ", ";
-
+            if (original_type.getNonReferenceType().isConstQualified()) {
+                SSBefore << " const ";
+                if (original_type->isReferenceType()) {
+                    SSBefore << "ref";
+                }
+            }
+        }
     }
     SSBefore << "]\n";
     SourceLocation ST = f->getSourceRange().getBegin();
