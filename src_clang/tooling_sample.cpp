@@ -40,28 +40,33 @@ public:
   bool VisitFunctionDecl(FunctionDecl *f) {
     // Only function definitions (with bodies), not declarations.
     std::stringstream SSBefore;
-    SSBefore << "// FuncDecl Args of type: [";
     unsigned int num_params = f->getNumParams();
+    SSBefore << "// FuncDecl Args of length " << num_params << " and type: [";
     for (unsigned int i=0;i<num_params;i++) {
+
         ParmVarDecl* p = f->getParamDecl(i);
-        clang::QualType original_type = p->getOriginalType();
+        QualType original_type = p->getOriginalType();
+        QualType original_nonref = original_type.getNonReferenceType();
         const IdentifierInfo* id = original_type.getBaseTypeIdentifier();
-        
-        if (id == NULL) {
+       
+
+        if (id == NULL) { // handle non class types?)
             continue;
         }
         
-        if (!id->getName().compare("StringData")) {
-            SSBefore << "(" << id->getName().str() << ")";
+        if (!id->getName().compare("StringData") && 
+            original_type->isReferenceType() && 
+            original_nonref.isConstQualified()) {
+
+            original_nonref.removeLocalConst(); 
+            SourceLocation AT = p->getSourceRange().getBegin();
             
-            if (original_type.getNonReferenceType().isConstQualified()) {
-                SSBefore << " const ";
-                if (original_type->isReferenceType()) {
-                    SSBefore << "ref";
-                }
-            }
+            TheRewriter.ReplaceText(AT, original_type.getAsString().length()-1, original_nonref.getAsString());
+            
         }
     }
+
+
     SSBefore << "]\n";
     SourceLocation ST = f->getSourceRange().getBegin();
     TheRewriter.InsertText(ST, SSBefore.str(), true, true);
