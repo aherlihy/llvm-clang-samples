@@ -36,98 +36,43 @@ public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
 
-  // TODO: change F(const StringData& c) to F(StringData c)
   bool VisitFunctionDecl(FunctionDecl *f) {
-    // Only function definitions (with bodies), not declarations.
-    std::stringstream SSBefore;
-    unsigned int num_params = f->getNumParams();
-    SSBefore << "// FuncDecl Args of length " << num_params << " and type: [";
-    for (unsigned int i=0;i<num_params;i++) {
-
+    clang::LangOptions LangOpts;
+    LangOpts.CPlusPlus = true;
+    const clang::PrintingPolicy Policy(LangOpts);
+    
+    for (unsigned int i=0; i<f->getNumParams(); i++) {
+        
+        std::string name_str;
+        llvm::raw_string_ostream s(name_str);
+        
         ParmVarDecl* p = f->getParamDecl(i);
         QualType original_type = p->getOriginalType();
-        QualType original_nonref = original_type.getNonReferenceType();
+        QualType original_nr = original_type.getNonReferenceType();
         const IdentifierInfo* id = original_type.getBaseTypeIdentifier();
-       
-
-        if (id == NULL) { // handle non class types?)
-            continue;
-        }
+        if (id == NULL) { continue; }
         
         if (!id->getName().compare("StringData") && 
             original_type->isReferenceType() && 
-            original_nonref.isConstQualified()) {
-
-            original_nonref.removeLocalConst(); 
-            SourceLocation AT = p->getSourceRange().getBegin();
+            original_nr.isConstQualified()) {
+        
+            original_nr.removeLocalConst(); 
+            Type::TypeClass t = original_nr->getTypeClass();
+            // if the argument is declared with a namespace qualifier
+            if( t == Type::Elaborated ) {
+                const ElaboratedType* etype = cast<ElaboratedType>(original_nr);
+                NestedNameSpecifier* name = etype->getQualifier();
+                    name->print(s, Policy);
+            }
+            s << id->getName().data();
             
-            TheRewriter.ReplaceText(AT, original_type.getAsString().length()-1, original_nonref.getAsString());
-            
+           
+            TheRewriter.ReplaceText(p->getSourceRange(), s.str());
         }
+        
     }
-
-
-    SSBefore << "]\n";
-    SourceLocation ST = f->getSourceRange().getBegin();
-    TheRewriter.InsertText(ST, SSBefore.str(), true, true);
-
-    /*
-    if (f->hasBody()) {
-      Stmt *FuncBody = f->getBody();
-
-      // Type name as string
-      QualType QT = f->getReturnType();
-      std::string TypeStr = QT.getAsString();
-
-      // Function name
-      DeclarationName DeclName = f->getNameInfo().getName();
-      std::string FuncName = DeclName.getAsString();
-
-      // Add comment before
-      std::stringstream SSBefore;
-      SSBefore << "// Begin function " << FuncName << " returning " << TypeStr
-               << "\n";
-      SourceLocation ST = f->getSourceRange().getBegin();
-      TheRewriter.InsertText(ST, SSBefore.str(), true, true);
-
-      // And after
-      std::stringstream SSAfter;
-      SSAfter << "\n// End function " << FuncName;
-      ST = FuncBody->getLocEnd().getLocWithOffset(1);
-      TheRewriter.InsertText(ST, SSAfter.str(), true, true);
-    }
-    */
     return true;
   }
-/*
-  bool VisitCallExpr (CallExpr *e)
-  {
-    clang::LangOptions LangOpts;
-    LangOpts.CPlusPlus = true;
-    clang::PrintingPolicy Policy(LangOpts);
-    
-    std::stringstream FCBefore;
-    if(e->getNumArgs()) {
-        FCBefore << "//arg: [";
-    }
-    for(int i=0, j=e->getNumArgs(); i<j; i++)
-    {
-        std::string TypeS;
-        llvm::raw_string_ostream s(TypeS);
-        e->getArg(i)->printPretty(s, 0, Policy);
-	FCBefore << s.str() << " ";
-    }
-    if(e->getNumArgs()) {
-        FCBefore << "]\n";
-    }
-
-    SourceLocation ST = e->getSourceRange().getBegin();
-    TheRewriter.InsertText(ST, FCBefore.str(), true, true);
-    
-    return true;
-}
-*/
-
 
 private:
   Rewriter &TheRewriter;
@@ -145,7 +90,7 @@ public:
     for (DeclGroupRef::iterator b = DR.begin(), e = DR.end(); b != e; ++b) {
       // Traverse the declaration using our AST visitor.
       Visitor.TraverseDecl(*b);
-      (*b)->dump();
+      //(*b)->dump();
     }
     return true;
   }
@@ -179,11 +124,11 @@ private:
 };
 
 int main(int argc, const char **argv) {
-  printf("in main of clang sample\n Args : ");
+  /*printf("in main of clang sample\n Args : ");
   for(int i=0;i<argc;i++) {
     printf("'%s', ", argv[i]);
   }
-  printf("\n");
+  printf("\n");*/
   CommonOptionsParser op(argc, argv, ToolingSampleCategory);
 
   ClangTool Tool(op.getCompilations(), op.getSourcePathList());
