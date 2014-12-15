@@ -58,16 +58,17 @@ public:
         
             original_nr.removeLocalConst(); 
             Type::TypeClass t = original_nr->getTypeClass();
+            unsigned int len = 17;
             // if the argument is declared with a namespace qualifier
             if( t == Type::Elaborated ) {
                 const ElaboratedType* etype = cast<ElaboratedType>(original_nr);
                 NestedNameSpecifier* name = etype->getQualifier();
                     name->print(s, Policy);
+                len = 24;
             }
             s << id->getName().data();
-            
            
-            TheRewriter.ReplaceText(p->getSourceRange(), s.str());
+            TheRewriter.ReplaceText(p->getSourceRange().getBegin(), len, s.str());
         }
         
     }
